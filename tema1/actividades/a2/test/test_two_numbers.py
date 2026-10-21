@@ -13,7 +13,7 @@ class TestRestaValores(unittest.TestCase):
     def test_resta_raises(self):
             
         with self.assertRaises(TypeError):
-                    calculadora_tests.resta("papas")
+            calculadora_tests.resta("papas")
     
 
 class TestDivisionValores(unittest.TestCase):
@@ -25,8 +25,11 @@ class TestDivisionValores(unittest.TestCase):
     
     def test_division_raises(self):
             
+        with self.assertRaises(ValueError):
+            calculadora_tests.division(10, 0)
+            
         with self.assertRaises(TypeError):
-                    calculadora_tests.division("papas")
+            calculadora_tests.division("papas")
 
 
 if __name__ == '__main__':
