@@ -5,6 +5,14 @@ __Curso:__ Especialización Ciberseguridad
 
 ## Índice
 
+- [1. Desbordamiento de Búfer](#1-desbordamiento-de-búfer-buffer-overflow)
+
+- [2. Uso Tras Liberación](#2-uso-tras-liberación-use-after-free---uaf)
+
+- [3. Doble Liberación](#3-doble-liberación-double-free)
+
+- [4. Cadena de Formato](#4-cadena-de-formato-format-string-vulnerability)
+
 ## Ejercicios
 
 Para los siguientes ejemplos, encuentra la vulnerabilidad y explica
