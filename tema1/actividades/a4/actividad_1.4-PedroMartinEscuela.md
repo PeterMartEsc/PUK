@@ -1,5 +1,8 @@
 # Actividad 1.4: Vulnerabilidades, lenguajes de alto nivel.
 
+__Autor:__ Pedro Martín Escuela <br>
+__Asignatura:__ Puesta en producción Segura
+
 ## Introducción
 
 A continuación se presentan 4 __fragmentos de código__ pertenecientes a distintos __servicios de una aplicación web__ en _Python_. Cada fragmento contiene una __vulnerabilidad crítica__ de
@@ -120,3 +123,70 @@ def cargar_sesion():
 ```
 
 ## Caso 4: Descarga de Facturas y Documentos
+
+Los usuarios autenticados pueden descargar sus recibos desde el área de clientes introduciendo el identificador de la factura. 
+
+```py
+from flask import Flask, request, jsonify, send_file
+import sqlite3
+
+app = Flask(__name__)
+@app.route("/facturas/descargar", methods=["GET"])
+def descargar_factura():
+    factura_id = request.args.get("id")
+
+    # Buscamos la factura parametrizada
+    conn = sqlite3.connect("sistema.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT ruta_archivo FROM facturas WHERE id= ?", (factura_id,))
+    factura = cursor.fetchone()
+    conn.close()
+
+    if factura:
+        return send_file(factura[0], as_attachment=True)
+
+    return jsonify({"error": "Factura no encontrada"}), 404
+```
+
+__Vulnerabilidad:__ _Path Traversal_.
+
+__Impacto:__ Un atacante puede registrar una factura con una ruta maliciosa, o si la lógica interna del sistema permite manipular ese campo, se podrían descargar archivos sensibles del servidor.
+
+__Código corregido:__ deberíamos restringir las descargas a un directorio específico utilizando `os.path`.
+
+```py
+import os
+from flask import Flask, request, jsonify, send_from_directory
+import sqlite3
+
+app = Flask(__name__)
+# Definimos el directorio seguro de facturas.
+FACTURAS_DIR = os.path.abspath("ruta/segura/facturas")
+
+@app.route("/facturas/descargar", methods=["GET"])
+def descargar_factura():
+    factura_id = request.args.get("id")
+
+    if not factura_id:
+        return jsonify({"error": "ID requerido"}), 400
+
+    conn = sqlite3.connect("sistema.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT ruta_archivo FROM facturas WHERE id = ?", (factura_id,))
+    factura = cursor.fetchone()
+    conn.close()
+
+    if factura:
+        # Extraemos solo el nombre del archivo
+        nombre_archivo = os.path.basename(factura[0])
+        
+        try:
+            # Y guardamos en el directorio seguro
+            return send_from_directory(FACTURAS_DIR, nombre_archivo, as_attachment=True)
+        except FileNotFoundError:
+            return jsonify({"error": "Archivo físico no encontrado"}), 404
+
+    return jsonify({"error": "Factura no encontrada"}), 404
+```
+
+Esta corrección es bastante específica, si tuvieramos más opciones de directorios, habría que manejarlas.
